@@ -1,0 +1,175 @@
+
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pi Tap Race</title>
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #6a1b9a;
+    }
+    #tapButton {
+      font-size: 24px;
+      padding: 20px 40px;
+      background: #6a1b9a;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    #tapCount {
+      font-size: 36px;
+      margin: 20px 0;
+    }
+    .section {
+      margin: 30px 0;
+    }
+    .banner {
+      margin: 20px auto;
+      padding: 10px;
+      border: 2px dashed #aaa;
+      border-radius: 10px;
+      background: #fff;
+      max-width: 300px;
+    }
+    #rewardNote {
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      padding: 15px;
+      margin: 20px auto;
+      border-radius: 10px;
+      max-width: 90%;
+    }
+    #donateBtn {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #00b894;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    ul#leaderboard {
+      list-style: none;
+      padding: 0;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+    ul#leaderboard li {
+      background: #eee;
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚀 Pi Tap Race</h1>  <div class="section">
+    <p>Tap as fast as you can in 10 seconds!</p>
+    <button id="tapButton">Start Tapping</button>
+    <div id="tapCount">0</div>
+  </div>  <div id="rewardNote">
+    🕹️ <strong>Compete for fun!</strong><br>
+    🎁 Pi rewards coming soon once donations and ads support it.<br>
+    🔔 Follow updates on Telegram: <strong>@Officefiletool</strong>
+  </div>  <div class="section">
+    <h3>🏆 Leaderboard</h3>
+    <ul id="leaderboard">
+      <!-- Scores will appear here -->
+    </ul>
+  </div>  <div class="banner">
+    <p><strong>📢 Advertise here!</strong><br>
+    Contact @NINZWAPO on Telegram<br>
+    <small>Support the app with Pi ads</small></p>
+  </div>  <div class="section">
+    <h3>💸 Support the Developer</h3>
+    <p>Send Pi to wallet:<br><strong>GD2JY5FNRX4C47WA7TBLJSSNYELEHUHCMJQSWOKGQHTDPZJEOCQRROWV</strong></p>
+    <button id="donateBtn">Copy Wallet Address</button>
+  </div>  <script>
+    let count = 0;
+    let gameActive = false;
+    const btn = document.getElementById('tapButton');
+    const counter = document.getElementById('tapCount');
+    const leaderboard = document.getElementById('leaderboard');
+    let user = null;
+
+    // Pi Login
+    Pi.init({ version: "2.0" });
+    Pi.authenticate(['username'], function(auth) {
+      user = auth.user;
+      console.log("Logged in as:", user.username);
+    }, function(error) {
+      console.error("Login failed:", error);
+    });
+
+    // Fetch leaderboard
+    fetch('/api/scores')
+      .then(res => res.json())
+      .then(data => {
+        leaderboard.innerHTML = '';
+        data.forEach(score => {
+          const li = document.createElement('li');
+          li.textContent = `${score.username}: ${score.score}`;
+          leaderboard.appendChild(li);
+        });
+      });
+
+    btn.addEventListener('click', () => {
+      if (!gameActive) {
+        count = 0;
+        gameActive = true;
+        btn.innerText = 'Tap! Tap! Tap!';
+        counter.innerText = count;
+
+        setTimeout(() => {
+          gameActive = false;
+          btn.innerText = 'Start Tapping';
+          alert(`Time's up! Your score: ${count}`);
+
+          if (user) {
+            fetch('/api/scores', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ username: user.username, score: count })
+            })
+            .then(res => res.json())
+            .then(result => {
+              console.log('Score saved:', result);
+              // Reload leaderboard only
+              fetch('/api/scores')
+                .then(res => res.json())
+                .then(data => {
+                  leaderboard.innerHTML = '';
+                  data.forEach(score => {
+                    const li = document.createElement('li');
+                    li.textContent = `${score.username}: ${score.score}`;
+                    leaderboard.appendChild(li);
+                  });
+                });
+            });
+          }
+        }, 10000);
+      } else {
+        count++;
+        counter.innerText = count;
+      }
+    });
+
+    document.getElementById('donateBtn').addEventListener('click', () => {
+      const wallet = 'GD2JY5FNRX4C47WA7TBLJSSNYELEHUHCMJQSWOKGQHTDPZJEOCQRROWV';
+      navigator.clipboard.writeText(wallet).then(() => {
+        alert('Wallet address copied! Thank you!');
+      });
+    });
+  </script></body>
+</html>
